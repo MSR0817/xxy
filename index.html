@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>雷州半岛红树林面积与增长率对比</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        #chart-container {
+            width: 1000px;
+            height: 600px;
+            margin: 20px auto;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        h1 {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 5px;
+            font-weight: normal;
+        }
+        .subtitle {
+            font-size: 13px;
+            color: #666;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+            gap: 20px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+        }
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            margin-right: 5px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+<div id="chart-container">
+    <div class="header">
+        <h1>雷州半岛红树林面积与增长率对比 (2001-2021)</h1>
+        <div class="subtitle">柱状图：2021年面积（公顷） | 折线图：20年复合增长率</div>
+    </div>
+    <div id="main-chart" style="width:100%;height:500px;"></div>
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-color" style="background:#5470C6;"></div>
+            <span>2021年面积</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background:#EE6666;"></div>
+            <span>增长率</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 等待DOM加载完成
+    document.addEventListener('DOMContentLoaded', function() {
+        // 初始化图表（确保容器已存在）
+        var chart = echarts.init(document.getElementById('main-chart'));
+
+        // 数据准备
+        var regions = ['赤坎区','雷州市','廉江市','坡头区','遂溪县','吴川市','霞山区','徐闻县','麻章区'];
+        var area2021 = [5.400,1743.733,1383.410,330.192,742.654,776.852,31.086,786.049,1471.198];
+        var growthRates = [-79.9,50.7,41.7,0.2,50.1,6.0,4.8,21.5,-7.3]; // 已经是百分比
+
+        // 配置项
+        var option = {
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'cross',
+                    label: {
+                        backgroundColor: '#6a7985'
+                    }
+                },
+                formatter: function(params) {
+                    var area = params[0].value;
+                    var rate = params[1].value;
+                    var change = (rate/100 * area/(1+rate/100)).toFixed(1);
+                    return `
+                        <div style="font-weight:bold;margin-bottom:8px">${params[0].name}</div>
+                        <div style="display:flex;justify-content:space-between">
+                            <span style="color:#5470C6">2021面积:</span>
+                            <span>${area} hm²</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between">
+                            <span style="color:#EE6666">20年增长率:</span>
+                            <span>${rate}%</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin-top:3px">
+                            <span>面积变化:</span>
+                            <span>${Math.abs(change)} hm² ${rate>0?'↑':'↓'}</span>
+                        </div>
+                    `;
+                }
+            },
+            grid: {
+                left: '60px',
+                right: '60px',
+                top: '40px',
+                bottom: '80px'
+            },
+            xAxis: {
+                type: 'category',
+                data: regions,
+                axisTick: {
+                    alignWithLabel: true
+                },
+                axisLabel: {
+                    rotate: 30,
+                    fontSize: 12,
+                    margin: 15
+                }
+            },
+            yAxis: [
+                {
+                    type: 'value',
+                    name: '面积 (hm²)',
+                    nameLocation: 'middle',
+                    nameGap: 30,
+                    axisLine: {
+                        lineStyle: {
+                            color: '#5470C6'
+                        }
+                    },
+                    axisLabel: {
+                        formatter: function(value) {
+                            return value >= 1000 ? (value/1000).toFixed(1) + 'k' : value;
+                        }
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            type: 'dashed'
+                        }
+                    }
+                },
+                {
+                    type: 'value',
+                    name: '增长率 (%)',
+                    nameLocation: 'middle',
+                    nameGap: 30,
+                    min: -100,
+                    max: 100,
+                    axisLine: {
+                        lineStyle: {
+                            color: '#EE6666'
+                        }
+                    },
+                    axisLabel: {
+                        formatter: '{value}%'
+                    },
+                    splitLine: {
+                        show: false
+                    }
+                }
+            ],
+            series: [
+                {
+                    name: '2021年面积',
+                    type: 'bar',
+                    barWidth: 24, // 细柱设置（像素值）
+                    data: area2021,
+                    itemStyle: {
+                        color: '#5470C6',
+                        borderRadius: [2, 2, 0, 0]
+                    },
+                    label: {
+                        show: true,
+                        position: 'top',
+                        formatter: function(params) {
+                            return params.value > 1000 ? (params.value/1000).toFixed(1) + 'k' : params.value;
+                        },
+                        fontSize: 11
+                    }
+                },
+                {
+                    name: '增长率',
+                    type: 'line',
+                    yAxisIndex: 1,
+                    symbol: 'circle',
+                    symbolSize: 8,
+                    lineStyle: {
+                        width: 2.5
+                    },
+                    data: growthRates,
+                    itemStyle: {
+                        color: '#EE6666'
+                    },
+                    label: {
+                        show: true,
+                        position: 'top',
+                        formatter: '{c}%',
+                        color: '#EE6666',
+                        fontSize: 11
+                    }
+                }
+            ]
+        };
+
+        // 应用配置
+        chart.setOption(option);
+
+        // 窗口大小变化时重绘
+        window.addEventListener('resize', function() {
+            chart.resize();
+        });
+    });
+</script>
+</body>
+</html>
